@@ -16,8 +16,13 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
+
+#include "table.h"
+#include "imagelib.h"
 #include "cards.h"
 #include "taipeilib.h"
 
@@ -26,12 +31,10 @@ static Picture *tiles[9];
 
 static int lbx, lby, lbw, lbh;
 
-extern int table_background;
 extern Display *display;
 extern int screen;
 extern Window window;
 extern GC gc;
-extern int table_width, table_height;
 
 static void
 save()

@@ -18,12 +18,13 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
+
+#include "table.h"
+#include "imagelib.h"
 #include "cards.h"
 
 static Picture *xlogo, *splash, *youwin;
 static Picture *cell, *blank;
-
-extern int table_width, table_height;
 
 static char grid[9];
 

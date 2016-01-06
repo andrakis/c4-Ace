@@ -16,6 +16,8 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -23,21 +25,15 @@
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
 
+#include "table.h"
 #include "cards.h"
+#include "xwin.h"
 
 extern Display *display;
-extern int screen;
 extern Window window;
 extern GC gc;
-extern int help_background, table_background;
-extern int table_width, table_height;
 
-int help_foreground, help_beyondcolor;
-
-extern int help_is_showing;
-extern void (*help_redraw)(void);
-extern void (*help_click)(int x, int y, int b);
-extern void (*help_key)(int c, int x, int y);
+static int help_foreground, help_beyondcolor;
 
 #define STYLE_NONE	0x00
 #define STYLE_B		0x01

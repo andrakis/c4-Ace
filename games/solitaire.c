@@ -16,9 +16,12 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include <time.h>
 #include <math.h>
 #include "imagelib.h"
+#include "table.h"
 #include "cards.h"
 
 #define W CARD_WIDTH
@@ -57,17 +60,17 @@ static OptionDesc new_options[] = {
   { 0, 0, 0 }
 };
 
-static OptionDesc *app_options = new_options;
+OptionDesc *app_options = new_options;
 
 static void
 start_again()
 {
   int i, p, pc;
-  stack_flip_stack(hole, deck);
+  stack_flip_stack(hole, deck, 0);
   for (i=0; i<4; i++)
-    stack_flip_stack(outcells[i], deck);
+    stack_flip_stack(outcells[i], deck, 0);
   for (i=0; i<7; i++)
-    stack_flip_stack(maincells[i], deck);
+    stack_flip_move_stack(maincells[i], deck, 0);
 
   stack_shuffle(deck);
   stack_shuffle(deck);
@@ -75,9 +78,9 @@ start_again()
   
   for (p=0; p<7; p++)
     for (pc=0; pc<=p; pc++)
-      stack_move_cards(deck, stack_count_cards(deck)-1, maincells[p]);
+      stack_move_card(deck, maincells[p], 0);
   for (p=0; p<7; p++)
-    stack_flip_card(maincells[p], maincells[p]);
+    stack_flip_card(maincells[p], maincells[p], 0);
 
   stack_undo_reset();
 
@@ -318,7 +321,7 @@ auto_move_stack(Stack *s)
   c = stack_get_card(s, n-1);
   if (FACEDOWNP(c))
   {
-    stack_flip_card(s, s);
+    stack_flip_card(s, s, 1);
     c = stack_get_card(s, n-1);
     return 1;
   }
@@ -327,7 +330,7 @@ auto_move_stack(Stack *s)
     for (i=0; i<4; i++)
       if (stack_count_cards(outcells[i]) == 0)
       {
-	stack_animate(s, outcells[i]);
+	stack_animate(s, outcells[i], 1);
 
         winnings += 5;
         update_status_text(1);
@@ -342,7 +345,7 @@ auto_move_stack(Stack *s)
       && VALUE(c) <= lowest[COLOR(c)?0:1] + 2
       && VALUE(c) <= lowest[COLOR(c)?1:0] + 3)
   {
-    stack_animate(s, outcells[pile_for[SUIT(c)]]);
+    stack_animate(s, outcells[pile_for[SUIT(c)]], 1);
 
     winnings += 5;
     update_status_text(1);
@@ -374,13 +377,13 @@ auto_move()
       lowest[COLOR(MAKE_CARD(i, ACE, FACEUP))?1:0] = 0;
   if (stack_count_cards(hole) == 0 && stack_count_cards(deck) > 0)
   {
-    stack_flip_card(deck, hole);
+    stack_flip_card(deck, hole, 1);
 
     if (flip_3s)
     {
       for (i=0; i<2; i++)
         if (stack_count_cards(deck))
-          stack_flip_card(deck, hole);
+          stack_flip_card(deck, hole, 1);
     }
 
     something_moved += 1;
@@ -416,11 +419,11 @@ click(int x, int y, int b)
 
   // abort drag on click of other mousebutton
   if (drag_active) {
-    stack_drop(dest_stack, last_n);
+    stack_drop(dest_stack, last_n, 0);
     drag_active = 0;
     return;
   };
-  
+
   if ((cp == youlose || cp == youwin)
       && (x > table_width/2-cp->w/2
 	  && x < table_width/2+cp->w/2
@@ -463,15 +466,15 @@ click(int x, int y, int b)
 	  return;
 	}
       }
-      stack_flip_stack(hole, deck);
+      stack_flip_stack(hole, deck, 0);
     }
     else
     {
-      stack_flip_card(deck, hole);
+      stack_flip_card(deck, hole, 0);
       if (flip_3s)
         for (c=0; c<2; c++)
           if (stack_count_cards(deck) != 0)
-	    stack_flip_card(deck, hole);
+	    stack_flip_card(deck, hole, 1);
       if (vegas && vegas_deck_count == 2 && stack_count_cards(deck) == 0)
       {
         display_vegas_xlogo = 1;
@@ -494,7 +497,7 @@ click(int x, int y, int b)
   {
     c = stack_get_card(src_stack, src_n);
     if (FACEDOWNP(c))
-      stack_flip_card(src_stack, src_stack);
+      stack_flip_card(src_stack, src_stack, 0);
 
     stack_begin_drag(src_stack, src_n, x, y);
   }
@@ -558,7 +561,7 @@ double_click(int x, int y, int b)
   if (dest_stack)
   {
     /*printf("- move 0x%08x %d 0x%08x\n", src_stack, dest_n, dest_stack);*/
-    stack_move_cards(src_stack, dest_n, dest_stack);
+    stack_move_cards(src_stack, dest_stack, stack_count_cards(src_stack) - dest_n, 0);
     check_for_end_of_game();
     return;
   }
@@ -581,7 +584,7 @@ double_click(int x, int y, int b)
   if (dest_stack)
   {
     /*printf("- move 0x%08x %d 0x%08x\n", src_stack, dest_n, dest_stack);*/
-    stack_move_cards(src_stack, dest_n, dest_stack);
+    stack_move_cards(src_stack, dest_stack, stack_count_cards(src_stack) - dest_n, 0);
     check_for_end_of_game();
     return;
   }
@@ -623,7 +626,7 @@ drop(int x, int y, int b)
 
   drag_active = 0;
 
-  stack_drop(dest_stack, last_n);
+  stack_drop(dest_stack, last_n, 0);
 
   drag_active = 0;
 

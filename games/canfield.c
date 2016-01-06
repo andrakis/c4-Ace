@@ -18,6 +18,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "table.h"
+#include "imagelib.h"
 #include "cards.h"
 
 #define W CARD_WIDTH
@@ -37,8 +40,6 @@ static Stack *hand, *talon, *stock, *tableau[4], *foundation[4];
 static int base_rank;
 static char base_mesg[14];
 
-extern int table_width, table_height;
-
 static int auto_move();
 
 static void debug(char *s)
@@ -54,24 +55,24 @@ static void start_again()
 	int i, j;
 
 	for (i = 0; i < 4; i++)
-		stack_flip_stack(tableau[i], hand);
+		stack_flip_stack(tableau[i], hand, 0);
 
 	for (i = 0; i < 4; i++)
-		stack_flip_stack(foundation[i], hand);
+		stack_flip_stack(foundation[i], hand, 0);
 
-	stack_flip_stack(stock, hand);
+	stack_flip_stack(stock, hand, 0);
 
 	stack_shuffle(hand);
 	stack_shuffle(hand);
 	stack_shuffle(hand);
 
 	for (i = 0; i < CARDS_IN_STOCK; i++)
-		stack_flip_card(hand, stock);
+		stack_flip_card(hand, stock, 0);
 
 	for (i = 0; i < 4; i++)
-		stack_flip_card(hand, tableau[i]);
+		stack_flip_card(hand, tableau[i], 0);
 
-	stack_flip_card(hand, foundation[0]);
+	stack_flip_card(hand, foundation[0], 0);
 
 	text("              ", 90, font_height+5);
 
@@ -245,10 +246,10 @@ static int n_droppable(int x, int y)
 	return n_droppable_s(dest_stack);
 }
 
-static void hand_to_talon() {
-	stack_flip_card(hand, talon);
-	stack_flip_card(hand, talon);
-	stack_flip_card(hand, talon);
+static void hand_to_talon(int flag) {
+	stack_flip_card(hand, talon, flag);
+	stack_flip_card(hand, talon, 1);
+	stack_flip_card(hand, talon, 1);
 }
 
 static int auto_move()
@@ -258,13 +259,13 @@ static int auto_move()
 	for (i = 0; i < 4; ++i)
 		if (!stack_count_cards(tableau[i]))
 			if (stack_count_cards(stock))
-				stack_animate(stock, tableau[i]);
+				stack_animate(stock, tableau[i], 1);
 			else if (stack_count_cards(talon))
-				stack_animate(talon, tableau[i]);				
+				stack_animate(talon, tableau[i], 1);
 
 	if (!stack_count_cards(talon)) {
 		if (stack_count_cards(hand)) {
-			hand_to_talon();
+			hand_to_talon(1);
 			m = 1;
 		}
 	} else {
@@ -274,7 +275,7 @@ static int auto_move()
 			for (j = 0; stack_count_cards(foundation[j]); ++j)
 				;
 
-			stack_animate(talon, foundation[j]);
+			stack_animate(talon, foundation[j], 1);
 			m = 1;
 		}
 
@@ -285,13 +286,12 @@ static int auto_move()
 			if (SUIT(f) == SUIT(c) &&
 			    (VALUE(f) == VALUE(c) - 1 ||
 			     (VALUE(f) == KING && VALUE(c) == ACE))) {
-				stack_animate(talon, foundation[i]);
+				stack_animate(talon, foundation[i], 1);
 				m = 1;
 				break;
 			}
 		}
 	}
-		
 
 	if (stack_count_cards(stock)) {
 		c = stack_get_card(stock, stack_count_cards(stock)-1);
@@ -300,7 +300,7 @@ static int auto_move()
 			for (j = 0; stack_count_cards(foundation[j]); ++j)
 				;
 
-			stack_animate(stock, foundation[j]);
+			stack_animate(stock, foundation[j], 1);
 			m = 1;
 		}
 
@@ -310,7 +310,7 @@ static int auto_move()
 			if (SUIT(f) == SUIT(c) &&
 			    (VALUE(f) == VALUE(c) - 1 ||
 			     (VALUE(f) == KING && VALUE(c) == ACE))) {
-				stack_animate(stock, foundation[i]);
+				stack_animate(stock, foundation[i], 1);
 				m = 1;
 				break;
 			}
@@ -324,7 +324,7 @@ static int auto_move()
 			for (j = 0; stack_count_cards(foundation[j]); ++j)
 				;
 
-			stack_animate(tableau[i], foundation[j]);
+			stack_animate(tableau[i], foundation[j], 1);
 			m = 1;
 			continue;
 		}
@@ -335,7 +335,7 @@ static int auto_move()
 			if (SUIT(f) == SUIT(c) &&
 			    (VALUE(f) == VALUE(c) - 1 ||
 			     (VALUE(f) == KING && VALUE(c) == ACE))) {
-				stack_animate(tableau[i], foundation[j]);
+				stack_animate(tableau[i], foundation[j], 1);
 				m = 1;
 				break;
 			}
@@ -436,15 +436,12 @@ static void click(int x, int y, int b)
 
 	if (src_stack == hand) {
 		if (0 == stack_count_cards(hand)) {
-			stack_flip_stack(talon, hand);
+			stack_flip_stack(talon, hand, 0);
 
 			return;
 		}
 
-		hand_to_talon();
-/*		stack_flip_card(hand, talon);
-		stack_flip_card(hand, talon);
-		stack_flip_card(hand, talon);*/
+		hand_to_talon(0);
 
 		return;
 	}
@@ -479,15 +476,15 @@ static void double_click(int x, int y, int b)
 			if (stack_count_cards(foundation[i]) == 0)
 				break;
 
-		stack_animate(src_stack, foundation[i]);
+		stack_animate(src_stack, foundation[i], 0);
 		return;
-	}	
+	}
 
 	for (i = 0; i < 4; ++i) {
 		f = stack_get_card(foundation[i], stack_count_cards(foundation[i])-1);
 
 		if (SUIT(f) == SUIT(c) && VALUE(f) == VALUE(c) - 1) {
-			stack_animate(src_stack, foundation[i]);
+			stack_animate(src_stack, foundation[i], 0);
 			return;
 		}
 	}
@@ -518,7 +515,7 @@ static void drop(int x, int y, int b)
 		return;
 	}
 
-	stack_drop(dest_stack, last_n);
+	stack_drop(dest_stack, last_n, 0);
 
 	while (auto_move())
 		;

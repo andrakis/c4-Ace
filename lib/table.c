@@ -16,6 +16,7 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 
@@ -23,13 +24,13 @@
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
 #include <X11/Xatom.h>
-#include <X11/xpm.h>
 
 #define CD printf("%d: %d %d %d %d\n", __LINE__, ex, ey, ew, eh)
 #undef CD
 #define CD
 
 #include "imagelib.h"
+#include "table.h"
 #include "cards.h"
 #include "xwin.h"
 #include "funcs.h"
@@ -44,8 +45,6 @@
 
 int table_width=0, table_height=0, table_type;
 int display_width, display_height;
-
-extern int stack_fan_down, stack_fan_right, stack_fan_tbdown, stack_fan_tbright;
 
 static Picture *centered_pic = 0;
 
@@ -742,7 +741,7 @@ snap_to_grid(int *x, int *y,
   }
 }
 
-char *suit_spots[] = {
+static char *suit_spots[] = {
   "15",
   "101:",
   "10151:",
@@ -755,8 +754,8 @@ char *suit_spots[] = {
   "00201104240626190:2:"
   };
 
-int spot_xx[] = { 0, 50, 100 };
-int spot_yy[] = { 0, 16, 25, 33, 36, 50, 63, 66, 75, 83, 100 };
+static int spot_xx[] = { 0, 50, 100 };
+static int spot_yy[] = { 0, 16, 25, 33, 36, 50, 63, 66, 75, 83, 100 };
 
 static void
 card_synth2(image *rv)

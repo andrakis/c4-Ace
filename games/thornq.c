@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "imagelib.h"
+#include "table.h"
 #include "cards.h"
 
 #define W CARD_WIDTH
@@ -28,8 +29,6 @@
 
 #define WIN_H H + M + 23*F
 #define WIN_W 8*W + 9*M
-
-extern int stack_fan_down;
 
 static Picture *xlogo, *splash, *youwin, *youlose, *arrow, *no_arrow;
 static Stack *deck, *outcells[4], *maincells[8];
@@ -46,7 +45,7 @@ static int ax, adx, ay, ady;
 static void
 resize(int w, int h)
 {
-  int margin, offset, cw, ch, s, fd, fr, tfd, tfr;
+  int margin, offset, cw, ch, s, fd;
   Picture *empty;
 
   stack_set_card_size (w/9, w/9*4/3);
@@ -65,7 +64,7 @@ resize(int w, int h)
   for (s=0; s<8; s++)
     stack_move(maincells[s], offset + s*(cw+margin), ch + (offset<0?0:offset));
 
-  stack_get_fans(&fd, &fr, &tfd, &tfr);
+  stack_get_fans(&fd, NULL, NULL, NULL);
 
   ax = offset + cw/2;
   adx = margin + cw;
@@ -149,10 +148,10 @@ start_again()
   clear_arrows();
 
   for (i = 0; i < 4; i++)
-    stack_flip_stack(outcells[i], deck);
+    stack_flip_stack(outcells[i], deck, 0);
 
   for (i = 0; i < 8; i++)
-    stack_flip_stack(maincells[i], deck);
+    stack_flip_move_stack(maincells[i], deck, 0);
 
   stack_shuffle(deck);
   stack_shuffle(deck);
@@ -160,14 +159,14 @@ start_again()
 
   for (i = 0; i < 4; i++) {
     for (j = 0; j < 4; j++)
-      stack_move_cards(deck, stack_count_cards(deck)-1, maincells[i]);
+      stack_move_card(deck, maincells[i], 0);
     for (j = 0; j < 3; j++)
-      stack_flip_card(deck, maincells[i]);
+      stack_flip_card(deck, maincells[i], 0);
   }
 
   for (i = 4; i < 8; i++)
     for (j = 0; j < 6; j++)
-      stack_flip_card(deck, maincells[i]);
+      stack_flip_card(deck, maincells[i], 0);
 
   stack_undo_reset();
   set_arrows();
@@ -392,14 +391,14 @@ auto_move()
     c = stack_get_card(maincells[i], stack_count_cards(maincells[i])-1);
 
     if (FACEDOWNP(c))
-      stack_flip_card(maincells[i], maincells[i]);
+      stack_flip_card(maincells[i], maincells[i], 1);
     /*continue;*//* use this to turn over cards yourself */
 
     if (ACE == VALUE(c)) {
       for (j = 0; stack_count_cards(outcells[j]); ++j)
 	;
 
-      stack_animate(maincells[i], outcells[j]);
+      stack_animate(maincells[i], outcells[j], 1);
       m = 1;
       continue;
     }
@@ -409,7 +408,7 @@ auto_move()
 
       if (SUIT(f) == SUIT(c) &&
 	  VALUE(f) == VALUE(c) - 1) {
-	stack_animate(maincells[i], outcells[j]);
+	stack_animate(maincells[i], outcells[j], 1);
 	m = 1;
 	break;
       }
@@ -514,7 +513,7 @@ click(int x, int y, int b)
 
   if (FACEDOWNP(stack_get_card(src_stack, stack_count_cards(src_stack)-1))
       == FACEDOWN) {
-    stack_flip_card(src_stack, src_stack);
+    stack_flip_card(src_stack, src_stack, 0);
     return;
   }
 
@@ -552,7 +551,7 @@ try_moving_to(int i)
 	    && VALUE(c) == VALUE(f) - 1
 	    && ! FACEDOWNP(c)) {
 	  clear_arrows();
-	  stack_move_cards(src_stack, src_n, maincells[i]);
+	  stack_move_cards(src_stack, maincells[i], stack_count_cards(src_stack) - src_n, 0);
 	  while (auto_move()) ;
 	  set_arrows();
 	  check_for_end_of_game();
@@ -578,9 +577,9 @@ try_moving_from(int i)
 		&& ! FACEDOWNP(f)) {
 	      clear_arrows();
 	      if (j == n-1)
-		stack_animate(maincells[i], src_stack);
+		stack_animate(maincells[i], src_stack, 0);
 	      else
-		stack_move_cards(maincells[i], j, src_stack);
+		stack_move_cards(maincells[i], src_stack, n - j, 0);
 	      while (auto_move()) ;
 	      set_arrows();
 	      check_for_end_of_game();
@@ -621,7 +620,7 @@ double_click(int x, int y, int b)
 	    if (!FACEDOWNP(c) && VALUE(c) == KING)
 	      {
 		clear_arrows();
-		stack_move_cards(maincells[i], j, src_stack);
+		stack_move_cards(maincells[i], src_stack, stack_count_cards(maincells[i]) - j, 0);
 		while (auto_move()) ;
 		set_arrows();
 		check_for_end_of_game();
@@ -670,7 +669,7 @@ drop(int x, int y, int b)
   }
 
   clear_arrows();
-  stack_drop(dest_stack, last_n);
+  stack_drop(dest_stack, last_n, 0);
 
   while (auto_move())
     ;

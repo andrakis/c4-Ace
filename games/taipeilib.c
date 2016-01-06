@@ -16,15 +16,15 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #include <stdio.h>
+#include <string.h>
 #include "imagelib.h"
+#include "table.h"
 #include "taipeilib.h"
 
 unsigned char grid[GRID_SX][GRID_SY][GRID_SZ];
 
 char *filename;
 int layer;
-
-extern int table_width, table_height;
 
 void
 load(int complain)

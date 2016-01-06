@@ -1,7 +1,9 @@
+#include <stdio.h>
+#include <string.h>
 #include "imagelib.h"
-#include "cards.h"
+#include "table.h"
 
-image_list *image_root = 0;
+static image_list *image_root = 0;
 
 int
 register_imagelib (image_list *images)

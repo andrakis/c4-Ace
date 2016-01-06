@@ -558,31 +558,43 @@ exists, <tt>x</tt> and <tt>y</tt> are set to the coordinates of the
 upper left pixel and a non-zero value is returned, else zero is
 returned and <tt>x</tt> and <tt>y</tt> are unchanged.</p>
 
-<dt><tt>int <b>stack_move_cards</b>(Stack *src, int n, Stack *dest)</tt>
+<dt><tt>void <b>stack_move_cards</b>(Stack *src, Stack *dest, int num, int flag)</tt>
 
-<dd> Causes card <tt>n</tt> from stack <tt>src</tt>, and all cards on
-top of it to be moved to the top of stack <tt>dest</tt>.  The
-face-upness is not changed.  When <tt>n</tt> is zero, all cards are
-moved.</p>
+<dd>Move <tt>num</tt> cards from the top of stack <tt>src</tt> to the top of
+stack <tt>dest</tt>. If <tt>flag</tt> is nonzero then <tt>stack_undo</tt>
+considers this an automatic move.</p>
 
-<dt><tt>void <b>stack_flip_card</b>(Stack *src, Stack *dest)</tt>
+<dt><tt>void <b>stack_move_card</b>(Stack *src, Stack *dest, int flag)</tt>
 
-<dd> Moves the top-most card from <tt>src</tt> to <tt>dest</tt>, and
-makes it face-up at the same time.</p>
+<dd>Like <tt>stack_move_cards</tt> but moves just one card.</p>
 
-<dt><tt>void <b>stack_flip_stack</b>(Stack *src, Stack *dest)</tt>
+<dt><tt>void <b>stack_flip_cards</b>(Stack *src, Stack *dest, int num, int flag)</tt>
 
-<dd> Moves all the cards from <tt>src</tt> to <tt>dest</tt> and makes
-all the moved cards face-down.  Note that the order is preserved as if
-the player had flipped the whole stack; the card that used to be on
-the bottom of <tt>src</tt> will be at the top of <tt>dest</tt>.</p>
+<dd>Take <tt>num</tt> cards from <tt>src</tt>, flip them over, and put
+them on top of <tt>dest</tt>. If <tt>flag</tt> is nonzero then
+<tt>stack_undo</tt> considers this an automatic move.</p>
 
-<dt><tt>void <b>stack_animate</b>(Stack *src, Stack *dest)</tt>
+<dt><tt>void <b>stack_flip_card</b>(Stack *src, Stack *dest, int flag)</tt>
+
+<dd>Like <tt>stack_flip_cards</tt> but flips just one card.</p>
+
+<dt><tt>void <b>stack_flip_stack</b>(Stack *src, Stack *dest, int flag)</tt>
+
+<dd>Like <tt>stack_flip_cards</tt> but flips the entire stack.</p>
+
+<dt><tt>void <b>stack_flip_move_stack</b>(Stack *src, Stack *dest, int flag)</tt>
+
+<dd>Combination of <tt>stack_flip_cards</tt> and <tt>stack_move_cards</tt>;
+assuming that the cards at the top of <tt>src</tt> are face up and the rest are
+face down, first flip those cards that are face up, then move the rest.</p>
+
+<dt><tt>void <b>stack_animate</b>(Stack *src, Stack *dest, int flag)</tt>
 
 <dd>Moves one card from <tt>src</tt> to <tt>dest</tt>, but does it in
 such a way that the player can <em>see</em> it moving from one to the
-other.  You should use this for auto-play so that the player can see
-what's happening.</p>
+other. If <tt>flag</tt> is nonzero then <tt>stack_undo</tt> considers
+this an automatic move. You should use this for auto-play so that the
+player can see what's happening.</p>
 
 <dt><tt>void <b>stack_undo</b>()</tt>
 
@@ -621,10 +633,12 @@ pass <tt>n</tt> greater than the largest card index (see
 <tt>stack_count_cards</tt>), a special graphic that indicates "drop
 not allowed here" is used.</p>
 
-<dt><tt>void <b>stack_drop</b>(Stack *onto, int n)</tt>
+<dt><tt>void <b>stack_drop</b>(Stack *onto, int n, int flag)</tt>
 
 <dd>This function ends a drag-and-drop operation by specifying which
 cards from the original stack are to be dropped onto <tt>onto</tt>.
+If <tt>flag</tt> is nonzero then <tt>stack_undo</tt> considers this
+an automatic move.
 You may pass the original stack as <tt>onto</tt> or pass <tt>n</tt>
 greater than the largest card index (see <tt>stack_count_cards</tt>)
 to cancel a drag operation. </p>

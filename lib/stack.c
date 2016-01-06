@@ -17,12 +17,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <time.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <math.h>
-
-extern int table_width, table_height;
 
 typedef struct Stack {
   struct Stack *prev, *next;
@@ -38,14 +38,15 @@ typedef struct Stack {
 
 #define STACK_DEF
 #include "imagelib.h"
+#include "table.h"
 #include "cards.h"
 
 static Picture **fronts=0;
 static Picture *back=0;
 static Picture *nodrop=0;
 static int card_width = CARD_WIDTH, card_height = CARD_HEIGHT;
-int stack_fan_down=CARD_FAN_DOWN, stack_fan_right=CARD_FAN_RIGHT;
-int stack_fan_tbdown=CARD_FAN_TBDOWN, stack_fan_tbright=CARD_FAN_TBRIGHT;
+static int stack_fan_down=CARD_FAN_DOWN, stack_fan_right=CARD_FAN_RIGHT;
+static int stack_fan_tbdown=CARD_FAN_TBDOWN, stack_fan_tbright=CARD_FAN_TBRIGHT;
 
 #define INIT_NUM	10
 #define STEP_NUM	10
@@ -59,16 +60,18 @@ static int dragging_dx, dragging_dy;
 
 typedef struct Undo {
   Stack *src;
-  short count;
-  short facedown;
   Stack *dest;
+  int num;
+  int flag;
 } Undo;
 
 static Undo *undo=0;
 static int max_undo=0, num_undo=0;
 static int doing_undo = 0;
 
-static void stack_note_undo(Stack *src, int n, Stack *dest);
+#define UNDO_FLAG_AUTO 1
+#define UNDO_FLAG_FLIP 2
+static void stack_note_undo(Stack *src, Stack *dest, int num, int flag);
 
 Stack *
 stack_create(int x, int y)
@@ -212,8 +215,6 @@ stack_set_offset(Stack *s, int which_offset)
   invalidate(s->x, s->y, s->w, s->h);
 }
 
-extern int get_picture_default_width, get_picture_default_height;
-
 void
 stack_set_card_size(int width, int height)
 {
@@ -330,7 +331,7 @@ void
 stack_shuffle(Stack *s)
 {
   int n, c, t;
-  int randomized = 0;
+  static int randomized = 0;
   if (! randomized)
   {
     srand(time(0));
@@ -387,9 +388,9 @@ stack_redraw_stack(Stack *s)
   }
 }
 
-int nodrop_x, nodrop_y, nodrop_showing=0;
+static int nodrop_x, nodrop_y, nodrop_showing=0;
 
-void
+static void
 stack_show_nodrop(int x, int y)
 {
   int oldx = nodrop_x;
@@ -406,7 +407,7 @@ stack_show_nodrop(int x, int y)
   put_picture(nodrop, nodrop_x, nodrop_y, 0, 0, nodrop->w, nodrop->h);
 }
 
-void
+static void
 stack_hide_nodrop()
 {
   if (nodrop_showing)
@@ -526,62 +527,90 @@ stack_card_posn(Stack *s, int n, int *x, int *y)
 }
 
 
-int
-stack_move_cards(Stack *src, int n, Stack *dest)
+void
+stack_move_cards(Stack *src, Stack *dest, int num, int flag)
 {
-  int count = src->num_cards - n;
-  if (n < 0 || n >= src->num_cards)
-    return 0;
+  if (num <= 0 || num > src->num_cards)
+    return;
 
-  stack_note_undo(src, n, dest);
+  stack_note_undo(src, dest, num, flag ? UNDO_FLAG_AUTO : 0);
 
-  stack_expand(dest, dest->num_cards+count);
+  stack_expand(dest, dest->num_cards + num);
 
-  memcpy(dest->cards+dest->num_cards, src->cards+n, count*sizeof(int));
+  memcpy(dest->cards + dest->num_cards,
+	 src->cards + src->num_cards - num,
+	 num * sizeof(int));
 
-  src->num_cards -= count;
+  src->num_cards -= num;
   stack_recalculate_size(src);
-  stack_show_change(src, src->num_cards, src->num_cards+count);
+  stack_show_change(src, src->num_cards, src->num_cards + num);
 
-  dest->num_cards += count;
+  dest->num_cards += num;
   stack_recalculate_size(dest);
-  stack_show_change(dest, dest->num_cards, dest->num_cards-count);
+  stack_show_change(dest, dest->num_cards, dest->num_cards - num);
 }
 
 void
-stack_flip_card(Stack *src, Stack *dest)
+stack_move_card(Stack *src, Stack *dest, int flag)
 {
-  if (src->num_cards < 1)
-    return;
-  stack_note_undo(src, src->num_cards-1, dest);
-  doing_undo = 1;
-  if (src != dest)
-  {
-    src->cards[src->num_cards-1] &= ~FACEDOWN;
-    stack_move_cards(src, src->num_cards-1, dest);
-  }
-  else
-    stack_change_card(dest, dest->num_cards-1,
-		      dest->cards[dest->num_cards-1] & ~FACEDOWN);
-  doing_undo = 0;
-}  
+  stack_move_cards(src, dest, 1, flag);
+}
 
 void
-stack_flip_stack(Stack *src, Stack *dest)
+stack_flip_cards(Stack *src, Stack *dest, int num, int flag)
 {
-  int old_s = src->num_cards;
-  int old_d = dest->num_cards;
+  int i;
+  if (num <= 0 || num > src->num_cards)
+    return;
+  stack_note_undo(src, dest, num, flag ? UNDO_FLAG_AUTO | UNDO_FLAG_FLIP : UNDO_FLAG_FLIP);
+  if (src == dest)
+  {
+    if (num == 1)
+      src->cards[src->num_cards-1] ^= FACEDOWN;
+    else
+    {
+      int *temp = alloca(num * sizeof(int));
+      for (i = 0; i < num; i++)
+	temp[i] = src->cards[src->num_cards - i - 1] ^ FACEDOWN;
+      memcpy(src->cards + src->num_cards - num, temp, num * sizeof(int));
+    }
+    stack_show_change(src, src->num_cards, src->num_cards - num);
+  }
+  else
+  {
+    stack_expand(dest, dest->num_cards + num);
+    for (i = 0; i < num; i++)
+      dest->cards[dest->num_cards++] = src->cards[--src->num_cards] ^ FACEDOWN;
+    stack_recalculate_size(src);
+    stack_recalculate_size(dest);
+    stack_show_change(src, src->num_cards, src->num_cards + num);
+    stack_show_change(dest, dest->num_cards, dest->num_cards - num);
+  }
+}
 
-  stack_note_undo(src, 0, dest);
-  stack_expand(dest, dest->num_cards + src->num_cards);
-  while (src->num_cards > 0)
-    dest->cards[dest->num_cards++] = src->cards[--src->num_cards] | FACEDOWN;
-  stack_show_change(dest, old_d-1, dest->num_cards-1);
-  stack_show_change(src, old_s-1, 0);
+void
+stack_flip_card(Stack *src, Stack *dest, int flag)
+{
+  stack_flip_cards(src, dest, 1, flag);
+}
+
+void
+stack_flip_stack(Stack *src, Stack *dest, int flag)
+{
+  stack_flip_cards(src, dest, src->num_cards, flag);
+}
+
+void
+stack_flip_move_stack(Stack *src, Stack *dest, int flag)
+{
+  int i;
+  for (i = 0; i < src->num_cards && FACEDOWNP(src->cards[i]); i++);
+  stack_flip_cards(src, dest, src->num_cards - i, flag);
+  stack_move_cards(src, dest, src->num_cards, 1);
 }
 
 static void
-stack_note_undo(Stack *src, int n, Stack *dest)
+stack_note_undo(Stack *src, Stack *dest, int num, int flag)
 {
   if (doing_undo) return;
   if (num_undo >= max_undo)
@@ -596,8 +625,8 @@ stack_note_undo(Stack *src, int n, Stack *dest)
     return;
   undo[num_undo].src = src;
   undo[num_undo].dest = dest;
-  undo[num_undo].count = stack_count_cards(src) - n + 1;
-  undo[num_undo].facedown = src->cards[src->num_cards-1] & FACEDOWN;
+  undo[num_undo].num = num;
+  undo[num_undo].flag = flag;
   num_undo++;
 }
 
@@ -610,21 +639,18 @@ stack_undo_reset()
 void
 stack_undo()
 {
-  Stack *src;
-  if (num_undo == 0)
-    return;
   doing_undo = 1;
-  num_undo--;
-  if (undo[num_undo].dest != undo[num_undo].src)
+  while (num_undo)
   {
-    stack_move_cards(undo[num_undo].dest,
-		     stack_count_cards(undo[num_undo].dest)-undo[num_undo].count+1,
-		     undo[num_undo].src);
-  }
-  if (undo[num_undo].facedown)
-  {
-    src = undo[num_undo].src;
-    stack_change_card(src, src->num_cards-1, src->cards[src->num_cards-1] | FACEDOWN);
+    num_undo--;
+    if (undo[num_undo].flag & UNDO_FLAG_FLIP)
+      stack_flip_cards(undo[num_undo].dest, undo[num_undo].src,
+		       undo[num_undo].num, 0);
+    else
+      stack_move_cards(undo[num_undo].dest, undo[num_undo].src,
+		       undo[num_undo].num, 0);
+    if (!(undo[num_undo].flag & UNDO_FLAG_AUTO))
+      break;
   }
   doing_undo = 0;
 }
@@ -715,7 +741,7 @@ stack_continue_drag(int n, int x, int y)
 }
 
 void
-stack_drop(Stack *onto, int n)
+stack_drop(Stack *onto, int n, int flag)
 {
   Stack *os = dragging_os;
   if (!dragging_os) return;
@@ -734,7 +760,7 @@ stack_drop(Stack *onto, int n)
   }
   else
   {
-    stack_move_cards(os, n, onto);
+    stack_move_cards(os, onto, os->num_cards - n, flag);
     stack_show_change(os, dragging_n, os->num_cards);
   }
 }
@@ -801,7 +827,7 @@ ms_pause()
 }
 
 void
-stack_animate(Stack *s, Stack *d)
+stack_animate(Stack *s, Stack *d, int flag)
 {
   int x1, y1, x2, y2, x, y, ox, oy;
   double dx, dist;
@@ -858,7 +884,7 @@ stack_animate(Stack *s, Stack *d)
     else
       ms_pause();
   }
-  stack_drop(d, sn-1);
+  stack_drop(d, sn-1, flag);
   flush();
   now = ms_time();
   last = now - start;
@@ -910,7 +936,7 @@ old_stack_animate(Stack *s, Stack *d)
     oy = y;
     flush();
   }
-  stack_drop(d, sn-1);
+  stack_drop(d, sn-1, flag);
   flush();
 
   /* Figure out the new speed; we want the visual rate to be

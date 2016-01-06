@@ -1,5 +1,5 @@
-/* The Ace of Penguins - freecell.c
-   Copyright (C) 1998, 2001 DJ Delorie
+/* The Ace of Penguins - spider.c
+   Copyright (C) 1998, 2001 Eric Bachalo
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,8 +20,9 @@
 #include <string.h>
 #include <time.h>
 
+#include "imagelib.h" 
+#include "table.h"
 #include "cards.h"
-//#include "imagelib.h"
 
 #define W CARD_WIDTH
 #define H CARD_HEIGHT
@@ -45,30 +46,24 @@ static int ax, adx, ay, ady;
 static void
 start_again()
 {
-  int i, d, s, v;
+  int i;
 
   clear_arrows();
 
   for (i=0; i<8; i++)
-    stack_flip_stack(outcells[i], deck);
+    stack_flip_stack(outcells[i], deck, 0);
   for (i=0; i<10; i++)
-    stack_flip_stack(maincells[i], deck);
-
-  while(stack_take_card(deck) != -1);
-  for (d=0; d<2; d++)
-    for (s=0; s<4; s++)
-      for (v=ACE; v<=KING; v++)
-	stack_add_card(deck, MAKE_CARD(s & suit_mask, v, FACEDOWN));
+    stack_flip_move_stack(maincells[i], deck, 0);
 
   stack_shuffle(deck);
   stack_shuffle(deck);
   stack_shuffle(deck);
   for (i=0; i<40; i++)
-    stack_move_cards(deck, stack_count_cards(deck)-1, maincells[i%10]);
+    stack_move_card(deck, maincells[i%10], 0);
   for (i=0; i<4; i++)
-    stack_move_cards(deck, stack_count_cards(deck)-1, maincells[i*3]);
+    stack_move_card(deck, maincells[i*3], 0);
   for (i=0; i<10; i++)
-    stack_flip_card(deck, maincells[i]);
+    stack_flip_card(deck, maincells[i], 0);
 
   stack_undo_reset();
 
@@ -78,7 +73,7 @@ start_again()
 static void
 init()
 {
-  int s;
+  int d, s, v;
   Picture *empty;
 
   stack_load_standard_deck();
@@ -98,13 +93,18 @@ init()
 
   deck = stack_create(M, M);
 
+  for (d=0; d<2; d++)
+    for (s=0; s<4; s++)
+      for (v=ACE; v<=KING; v++)
+	stack_add_card(deck, MAKE_CARD(s & suit_mask, v, FACEDOWN));
+
   start_again();
 }
 
 static void
 resize(int w, int h)
 {
-  int margin, offset, cw, ch, s, fd, fr, tfd, tfr;
+  int margin, offset, cw, ch, s, fd;
 
   Picture *empty;
 
@@ -124,7 +124,7 @@ resize(int w, int h)
     stack_move(maincells[s], offset + s*(cw+margin), ch + (offset<0?0:offset));
   stack_move(deck, margin+offset, margin);
 
-  stack_get_fans(&fd, &fr, &tfd, &tfr);
+  stack_get_fans(&fd, NULL, NULL, NULL);
 
   ax = offset + cw/2;
   adx = margin + cw;
@@ -217,6 +217,9 @@ set_arrows()
 	    if (!better) {
 	      if (SUIT(src_top) != SUIT(src_next)) better = 1;
 	    }
+	    if (!better) {
+	      if (FACEDOWNP(src_next)) better = 1;
+	    }
 	    if (better) add = 1;
 	  }
 	  if (n == 0 || VALUE(src_top) != VALUE(src_next)-1 ||
@@ -259,6 +262,7 @@ key(int k, int x, int y)
     break;
   case 8:  case 127:  case KEY_DELETE:
     set_centered_pic(0);
+    clear_arrows();
     stack_undo();
     set_arrows();
     break;
@@ -347,7 +351,8 @@ auto_move()
   for (i=0; i<10; i++) {
     n = stack_count_cards(maincells[i]);
     c = stack_get_card(maincells[i],n-1);
-    if (FACEDOWNP(c)) stack_flip_card(maincells[i], maincells[i]);
+    if (FACEDOWNP(c))
+      stack_flip_card(maincells[i], maincells[i], 1);
     if ((VALUE(c) == ACE) && n >= 13) {
       s = SUIT(c);
       v = 2;
@@ -361,7 +366,8 @@ auto_move()
 	c =0;
 	while(stack_count_cards(outcells[c++]) != 0);
 	c--;
-	for(v=ACE; v<=KING; v++) stack_animate(maincells[i],outcells[c]);
+	for(v=ACE; v<=KING; v++)
+	  stack_animate(maincells[i], outcells[c], 1);
 	i--; // to flip any cards in this column
       }
     }
@@ -429,7 +435,7 @@ click(int x, int y, int b)
     clear_arrows();
     if (empty_stack == 0) {
       for (c=0; c<10; c++) {
-	stack_flip_card(deck, maincells[c]);
+	stack_flip_card(deck, maincells[c], c);
       }
     }
   }
@@ -460,7 +466,7 @@ drop(int x, int y, int b)
     return;
   }
   clear_arrows();
-  stack_drop(dest_stack, last_n);
+  stack_drop(dest_stack, last_n, 0);
   check_for_end_of_game();
   set_arrows();
 }
@@ -489,7 +495,7 @@ main(int argc, char **argv)
   if (table_width == 0 || table_height == 0)
     {
       table_width = 10*(W+M) + M;
-      table_height = 480;
+      table_height = 600;
     }
   init_table(table_width, table_height);
   table_loop();

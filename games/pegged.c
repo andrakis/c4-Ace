@@ -16,17 +16,20 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include <time.h>
 #include <math.h>
-#include "cards.h"
 
 #include <X11/keysym.h>
+
+#include "table.h"
+#include "imagelib.h"
+#include "cards.h"
 
 static Picture *xlogo, *splash, *youwin, *youlose;
 static Picture *hole, *peg;
 #define RADIUS (peg->w/2)
-
-extern int table_width, table_height;
 
 #define RULES_VH       	1
 #define RULES_TRI	2

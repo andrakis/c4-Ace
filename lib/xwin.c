@@ -16,6 +16,7 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 #include <math.h>
@@ -38,18 +39,17 @@ typedef struct {
 
 #define ROT(a,b) if (xrotate) { int t = a; a = b; b = t; }
 
-int pixel_for (int r, int g, int b);
-
 #include "imagelib.h"
+#include "table.h"
 #include "cards.h"
 #include "xwin.h"
 
 static char AOP[] = "The Ace of Penguins - ";
 static char *type_names[] = {"mono", "grey", "color"};
 
-int xrotate = 0;
-int visual_id = 0;
-OptionDesc xwin_options_list[] = {
+static int xrotate = 0;
+static int visual_id = 0;
+static OptionDesc xwin_options_list[] = {
   { "-rotate", OPTION_BOOLEAN, &xrotate },
   { "-visual", OPTION_INTEGER, &visual_id },
   { 0, 0, 0 }
@@ -58,14 +58,15 @@ OptionDesc *xwin_options = xwin_options_list;
 
 Display *display=0;
 int screen=0;
-Visual *visual=0;
-Colormap cmap=0;
+static Visual *visual=0;
+static Colormap cmap=0;
 Window window=0;
-Window rootwin=0;
-GC gc=0, imggc=0, maskgc=0;
-XFontStruct *font;
+static Window rootwin=0;
+GC gc=0;
+static GC imggc=0, maskgc=0;
+static XFontStruct *font;
 int font_width, font_height;
-XVisualInfo vi, *vip;
+static XVisualInfo vi, *vip;
 
 static int broken_xserver = 0;
 
@@ -88,10 +89,10 @@ int help_background;
 /* Motif window hints */
 typedef struct
 {
-  unsigned flags;
-  unsigned functions;
-  unsigned decorations;
-  int inputMode;
+  unsigned long flags;
+  unsigned long functions;
+  unsigned long decorations;
+  long inputMode;
 } PropMotifWmHints;
 
 typedef PropMotifWmHints        PropMwmHints;
@@ -121,7 +122,7 @@ typedef PropMotifWmHints        PropMwmHints;
 #define PROP_MWM_HINTS_ELEMENTS       PROP_MOTIF_WM_HINTS_ELEMENTS
 
 
-void break_here(){}
+static void break_here(){}
 
 static char *name;
 
@@ -377,6 +378,19 @@ xwin_nextevent (XWin_Event *ev)
   char c;
   static int click_button;
   static int last_resize_w=-1, last_resize_h=-1;
+  static int need_expose = 0;
+  static int window_is_mapped = 0;
+
+  if (need_expose && window_is_mapped)
+    {
+      ev->type = ev_expose;
+      ev->x = 0;
+      ev->y = 0;
+      ev->w = last_resize_w;
+      ev->h = last_resize_h;
+      need_expose = 0;
+      return ev_expose;
+    }
 
   while (1)
   {
@@ -397,6 +411,7 @@ xwin_nextevent (XWin_Event *ev)
 	  break;
 	last_resize_w = ev->w;
 	last_resize_h = ev->h;
+	need_expose = 1;
 	return ev_resize;
 	
       case Expose:
@@ -407,6 +422,8 @@ xwin_nextevent (XWin_Event *ev)
 	ev->y = event.xexpose.y;
 	ev->w = event.xexpose.width;
 	ev->h = event.xexpose.height;
+	window_is_mapped = 1;
+	need_expose = 0;
 	return ev_expose;
 
       case ButtonPress:
@@ -424,6 +441,8 @@ xwin_nextevent (XWin_Event *ev)
 
       case MotionNotify:
 
+	if (!(event.xmotion.state & ButtonMask))
+	  break;
 	while (XCheckMaskEvent(display, ButtonMotionMask, &event));
 	if (!XQueryPointer(display, event.xmotion.window,
 			   &root, &child, &root_x, &root_y,
@@ -534,8 +553,6 @@ xwin_restore_clip ()
   else
     XSetClipMask(display, gc, None);
 }
-
-extern int help_is_showing;
 
 void
 clear(int x, int y, int w, int h)
@@ -683,7 +700,7 @@ pixel_for (int r, int g, int b)
   abort();
 }
 
-void
+static void
 cvt_rgbt (image *img)
 {
   int r, g, b, a=255, x, y;
@@ -712,7 +729,7 @@ cvt_rgbt (image *img)
       }
 }
 
-void
+static void
 cvt_cpt (image *img)
 {
   int rs, gs, bs, i, x, y;
@@ -757,7 +774,7 @@ cvt_cpt (image *img)
       }
 }
 
-void
+static void
 cvt_gt (image *img)
 {
   int rs, gs, bs, i, x, y;
@@ -780,7 +797,7 @@ cvt_gt (image *img)
       }
 }
 
-struct {
+static struct {
   int png_image_type;
   void (*converter)(image *);
 } image_converters[] = {
@@ -824,13 +841,13 @@ build_image (image *src)
   png_ptr = png_create_read_struct (PNG_LIBPNG_VER_STRING, 0, 0, 0);
   info_ptr = png_create_info_struct (png_ptr);
 
-  if (setjmp (png_ptr->jmpbuf)) {
+  if (setjmp (png_jmpbuf (png_ptr))) {
     fprintf(stderr, "Invalid PNG image!\n");
     return;
   }
 
   file_bytes = src->file_data;
-  png_set_read_fn (png_ptr, (voidp)&file_bytes, (png_rw_ptr)png_reader);
+  png_set_read_fn (png_ptr, (png_voidp)&file_bytes, (png_rw_ptr)png_reader);
 
   png_read_info (png_ptr, info_ptr);
 

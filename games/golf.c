@@ -15,7 +15,13 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include <X11/Xlib.h>
+
+#include "table.h"
+#include "imagelib.h"
 #include "cards.h"
 
 #define W CARD_WIDTH
@@ -24,14 +30,12 @@
 #define R CARD_FAN_TBRIGHT
 #define D stack_fan_down
 
-extern int stack_fan_down;
+static int stack_fan_down;
 
 static Picture *splash, *youwin, *youlose;
 static Picture *arrow, *no_arrow;
 
 static Stack *deck, *discard, *stacks[7];
-
-extern int table_width, table_height;
 
 static int supress_arrows = 0;
 
@@ -116,9 +120,9 @@ start_again()
 
   clear_arrows();
 
-  stack_flip_stack(discard, deck);
+  stack_flip_stack(discard, deck, 0);
   for (i=0; i<7; i++)
-    stack_flip_stack(stacks[i], deck);
+    stack_flip_stack(stacks[i], deck, 0);
 
   stack_shuffle(deck);
   stack_shuffle(deck);
@@ -126,9 +130,9 @@ start_again()
 
   for (i=0; i<7; i++)
     for (j=0; j<5; j++)
-      stack_flip_card(deck, stacks[i]);
+      stack_flip_card(deck, stacks[i], 0);
 
-  stack_flip_card(deck, discard);
+  stack_flip_card(deck, discard, 0);
 
   stack_undo_reset();
   show_count();
@@ -168,6 +172,8 @@ init()
       stack_add_card(deck, MAKE_CARD(s, v, FACEDOWN));
 
   arrow_offset = arrow_offset + (W - arrow->w)/2;
+
+  stack_get_fans(&stack_fan_down, NULL, NULL, NULL);
 
   start_again();
 }
@@ -242,7 +248,7 @@ click(int x, int y, int b)
 
   if (s == deck)
   {
-    stack_flip_card(deck, discard);
+    stack_flip_card(deck, discard, 0);
     show_count();
     set_arrows();
     check_for_endgame();
@@ -263,7 +269,7 @@ click(int x, int y, int b)
       && VALUE(top_discard) != VALUE(top_stack)-1)
     return;
 
-  stack_flip_card(s, discard);
+  stack_move_card(s, discard, 0);
   set_arrows();
 
   check_for_endgame();

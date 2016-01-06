@@ -86,7 +86,7 @@ scan_image_directory ()
     png_ptr = png_create_read_struct (PNG_LIBPNG_VER_STRING, 0, 0, 0);
     info_ptr = png_create_info_struct (png_ptr);
 
-    if (setjmp (png_ptr->jmpbuf)) {
+    if (setjmp (png_jmpbuf (png_ptr))) {
       fclose (f);
       continue;
     }
@@ -115,6 +115,8 @@ scan_image_directory ()
 
     fclose (f);
   }
+
+  closedir(dir);
 }
 
 static int print_col = 0;
@@ -200,10 +202,10 @@ tokenize(char *string)
   char *rv;
   if (string) {
     next = string;
-    return;
+    return NULL;
   }
   while (*next && !isgraph(*next)) next++;
-  if (!*next) return 0;
+  if (!*next) return NULL;
   rv = next;
   while (*next && isgraph(*next)) next++;
   if (*next)
@@ -255,7 +257,7 @@ main(int argc, char **argv)
     case 'd':
       depfile = fopen(optarg, "w");
       if (!depfile) {
-	fprintf(stderr, "Unable to open dependency file %s for writing\n", depfile);
+	fprintf(stderr, "Unable to open dependency file %s for writing\n", optarg);
 	perror("The error was");
 	exit(1);
       }

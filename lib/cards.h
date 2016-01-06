@@ -26,70 +26,7 @@
 #define CARD_FAN_TBDOWN	6
 #define CARD_FAN_TBRIGHT 6
 
-#define TABLE_MONO	0
-#define TABLE_GRAY	1
-#define TABLE_COLOR	2
-extern int table_type;
-
-extern int display_width, display_height;
-extern int table_width, table_height;
-
-#define OPTION_BOOLEAN	1
-#define OPTION_STRING	2
-#define OPTION_INTEGER	3
-typedef struct {
-  char *option;
-  int type;
-  void *ptr;
-} OptionDesc;
-/* Apps do `OptionDesc *app_options = app_option_table;' if needed, last zero */
-
-typedef struct {
-  char *name;
-  void *function;
-} FunctionMapping;
-
-/* This sets display_width/height, sets table_width/height to preferred or zero */
-void init_ace(int argc, char **argv, FunctionMapping *funcs);
-/* This creates the initial window */
-void init_table(int table_width, int table_height);
-/* Call this to begin processing events; */
-void table_loop();
-
-#ifndef _IMAGELIB_H_
-typedef struct image_list {
-  int filler;
-} image_list;
-extern struct image_list appimglib_imagelib[];
-#endif
-int register_imagelib(struct image_list *);
-
-/* Really, see image in imagelib.h */
-typedef struct Picture {
-  int w, h;
-} Picture;
-
-Picture *get_picture(char *name);
-
-/* The x,y,w,h are relative to (0,0) on the picture.  The dx,dy
-   indicate where (0,0) on the picture would go */
-void put_picture(Picture *picture, int dx, int dy,
-		 int x, int y, int w, int h);
-void put_picture_inverted(Picture *picture, int dx, int dy,
-			  int x, int y, int w, int h);
-
-/* This is drawn over everything else, centered.  Pass zero to remove */
-void set_centered_pic(Picture *picture);
-Picture *get_centered_pic();
-
-extern void clip(int x, int y, int w, int h);
-extern void clip_more(int x, int y, int w, int h);
-extern void unclip();
 extern void clear(int x, int y, int w, int h);
-extern void invalidate(int x, int y, int w, int h);
-extern void invalidate_nc(int x, int y, int w, int h);
-extern void invalidate_exposure(int ox, int oy, int ow, int oh,
-				int nx, int ny, int nw, int nh);
 extern void flush();
 extern void flushsync();
 extern void beep();
@@ -119,11 +56,6 @@ static void drop(int x, int y, int b);
 #define KEY_PGUP	0x205
 #define KEY_PGDN	0x206
 #define KEY_HOME	0x207
-
-void snap_to_grid(int *x, int *y,
-		  int step_x, int step_y,
-		  int origin_x, int origin_y,
-		  int max_distance);
 
 #ifndef STACK_DEF
 typedef struct Stack {void *stack__p;} Stack;
@@ -158,6 +90,11 @@ typedef struct {
   int fan_down, fan_right, fan_tbdown, fan_tbright;
 } StackSizes;
 
+#ifndef _TABLE_H_
+// for struct Picture
+#error include table.h first
+#endif
+
 Stack *	stack_create(int x, int y);
 void	stack_destroy(Stack *s);
 void	stack_set_pictures(Picture **fronts, Picture *back);
@@ -183,15 +120,18 @@ int	stack_find(int x, int y, Stack **stack_ret, int *n_ret);
 int	stack_drag_find(int x, int y, Stack **stack_ret);
 int	stack_card_posn(Stack *s, int n, int *x, int *y);
 
-int	stack_move_cards(Stack *src, int n, Stack *dest); /* n is card # */
-void	stack_flip_card(Stack *src, Stack *dest);
-void	stack_flip_stack(Stack *src, Stack *dest);
-void	stack_animate(Stack *src, Stack *dest);
+void	stack_move_cards(Stack *src, Stack *dest, int num, int flag);
+void	stack_move_card(Stack *src, Stack *dest, int flag);
+void	stack_flip_cards(Stack *src, Stack *dest, int num, int flag);
+void	stack_flip_card(Stack *src, Stack *dest, int flag);
+void	stack_flip_stack(Stack *src, Stack *dest, int flag);
+void	stack_flip_move_stack(Stack *src, Stack *dest, int flag);
+void	stack_animate(Stack *src, Stack *dest, int flag);
 void	stack_undo();
 void	stack_undo_reset();
 
 void	stack_begin_drag(Stack *s, int n, int x, int y);
 void	stack_continue_drag(int n, int x, int y);
-void	stack_drop(Stack *onto, int n);
+void	stack_drop(Stack *onto, int n, int flag);
 
 #endif

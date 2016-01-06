@@ -16,6 +16,11 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "table.h"
+#include "imagelib.h"
 #include "cards.h"
 
 #define C_EMPTY	 0
@@ -60,8 +65,6 @@ static int untagged=0, penguin=0;
 static int auto_play_mode = 0;
 
 static int title_y=0;
-
-extern int table_width, table_height;
 
 static inline int
 BOMB(int x, int y)

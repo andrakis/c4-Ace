@@ -16,7 +16,11 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include <time.h>
+
+#include "table.h"
 #include "cards.h"
 
 #define DOWN 0
@@ -105,9 +109,9 @@ drop(int x, int y, int b)
 {
   Stack *dest_stack;
   if (src_stack && stack_drag_find(x, y, &dest_stack))
-    stack_drop(dest_stack, src_n);
+    stack_drop(dest_stack, src_n, 0);
   else
-    stack_drop(src_stack, src_n);
+    stack_drop(src_stack, src_n, 0);
 }
 
 static FunctionMapping fmap[] = {

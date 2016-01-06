@@ -1,3 +1,162 @@
+2015-06-12  Esa Peuha  <esa.peuha@gmail.com>
+
+	* .cvsignore, games/.cvsignore, lib/.cvsignore, tests/.cvsignore:
+	  New files.
+
+2015-06-09  Esa Peuha  <esa.peuha@gmail.com>
+
+	* lib/table.c: Remove unneeded include of X11/xpm.h
+
+2015-06-08  Esa Peuha  <esa.peuha@gmail.com>
+
+	* games/Makefile.am: Fix spider-img.c dependencies.
+	* games/Makefile.in: Update.
+	* lib/cards.h: Remove fake definition of struct image_list and
+	  declarations of appimglib_imagelib and register_imagelib
+	* games/canfield.c, games/golf.c, games/mastermind.c,
+	  games/merlin.c, games/minesweeper.c, games/pegged.c,
+	  games/taipedit.c, tests/test6.c: Include imagelib.h
+	* lib/xwin.c: Remove redundant declaration of pixel_for
+	* lib/xwin.h: Declare help_background and table_background
+	* lib/help.c: Remove declarations of help_background and
+	  table_background
+
+2015-06-07  Esa Peuha  <esa.peuha@gmail.com>
+
+	* games/spider.c, lib/imagelib.h: Remove declaration of nonexisting
+	  function get_image_set_display_type
+	* lib/table.h: Add everything defined in table.c
+	* lib/cards.h: Remove things now in table.h
+	* games/canfield.c, games/freecell.c, games/golf.c,
+	  games/mastermind.c, games/merlin.c, games/minesweeper.c,
+	  games/pegged.c, games/solitaire.c, games/spider.c,
+	  games/taipedit.c, games/taipei.c, games/taipeilib.c,
+	  games/thornq.c, lib/funcs.c, lib/help.c, lib/imagelib.c,
+	  lib/stack.c, lib/table.c, lib/xwin.c, tests/penguins.c,
+	  tests/test1.c, tests/test3.c, tests/test4.c, tests/test5.c,
+	  tests/test6.c: Update included files.
+
+2015-06-06  Esa Peuha  <esa.peuha@gmail.com>
+
+	* games/canfield.c, games/golf.c, games/mastermind.c, games/merlin.c,
+	  games/minesweeper.c, games/pegged.c, games/taipedit.c,
+	  games/taipei.c, games/taipeilib.c, lib/help.c, lib/stack.c:
+	  Remove unneeded extern declarations.
+
+2015-06-05  Esa Peuha  <esa.peuha@gmail.com>
+
+	* games/thornq.c: Fix undo bug.
+	* lib/stack.c (stack_flip_move_stack): Fix undo bug.
+
+2015-06-04  Esa Peuha  <esa.peuha@gmail.com>
+
+	* games/solitaire.c (app_options): Mark non-static so that command
+	  line options work.
+	* lib/stack.c (stack_fan_*): Mark variables static.
+	* lib/table.c: Remove unused extern declarations of stack_fan_*
+	* games/golf.c: Replace reference to stack_fan_down with call to
+	  stack_get_fans.
+	* games/spider.c, games/thornq.c: Don't pass pointers to unused
+	  variables to stack_get_fans.
+
+2015-06-03  Esa Peuha  <esa.peuha@gmail.com>
+
+	* games/freecell.c: fix display bug.
+	* lib/cards.h, lib/stack.c (stack_flip_move_stack): New function.
+	* games/solitaire.c, games/thornq.c: Use stack_flip_move_stack
+	* games/spider.c: Use stack_flip_move_stack
+	* docs/toolkit.html: Document stack_flip_move_stack
+
+2015-06-02  Esa Peuha  <esa.peuha@gmail.com>
+
+	* lib/make-imglib.c, lib/xwin.c: Change png_ptr->jmpbuf to
+	  png_jmpbuf(png_ptr)
+	* lib/xwin.c: Change voidp to png_voidp
+	* lib/help.c, lib/imagelib.c, lib/stack.c, lib/table.c, lib/xwin.c:
+	  Mark functions and variables static.
+	* games/golf.c: fix display bug.
+
+2015-05-31  Esa Peuha  <esa.peuha@gmail.com>
+
+	* INSTALL, config.guess, config.sub, depcomp, install-sh,
+	  missing, mkinstalldirs: Update.
+	* lib/make-imglib.c (tokenize): Return NULL instead of 0 or
+	  nothing.
+	* lib/xwin.c (xwin_nextevent): Ignore spurious MotionNotify events.
+	* lib/xwin.c (PropMwmHints): Change ints to longs for 64-bit support.
+
+2015-05-28  Esa Peuha  <esa.peuha@gmail.com>
+
+	* aclocal.m4: Regenerate with aclocal 1.14.1
+	* games/Makefile.am, lib/Makefile.am, tests/Makefile.am:
+	  Change INCLUDES to AM_CPPFLAGS.
+	* lib/Makefile.am: Change make-imglib to make-imglib$(EXEEXT)
+	  and text2c to text2c$(EXEEXT).
+	* compile: New file.
+	* Makefile.in, games/Makefile.in, lib/Makefile.in,
+	  tests/Makefile.in: Regenerate with automake 1.14.1
+	* configure: Regenerate with autoconf 2.69
+	* ltmain.sh: Regenerate with libtool 2.4.2
+
+2013-01-12  Esa Peuha  <esa.peuha@gmail.com>
+
+	* lib/stack.c (struct Undo): Change members.
+	(stack_note_undo): Change parameters.
+	(stack_undo): Reimplement.
+	* lib/stack.c (stack_move_cards): Change parameters.
+	* lib/cards.h: Change declaration.
+	* docs/toolkit.html: Document it.
+	* games/freecell.c, games/solitaire.c,
+	  games/thornq.c, tests/test4.c: Update.
+	* lib/stack.c (stack_drop): Add parameter.
+	* lib/cards.h: Change declaration.
+	* docs/toolkit.html: Document it.
+	* games/canfield.c, games/freecell.c, games/solitaire.c,
+	  games/spider.c, games/thornq.c, tests/test5.c: Update.
+	* lib/stack.c (stack_animate): Add parameter.
+	* lib/cards.h: Change declaration.
+	* docs/toolkit.html: Document it.
+	* games/canfield.c, games/freecell.c, games/solitaire.c,
+	  games/spider.c, games/thornq.c: Update.
+
+2013-01-11  Esa Peuha  <esa.peuha@gmail.com>
+
+	* lib/stack.c (stack_flip_stack): Reimplement.
+	* lib/cards.h: Change declaration.
+	* docs/toolkit.html: Document it.
+	* games/canfield.c, games/freecell.c, games/golf.c,
+	  games/solitaire.c, games/spider.c, games/thornq.c: Update.
+	* lib/stack.c (stack_flip_card): Reimplement.
+	* lib/cards.h: Change declaration.
+	* docs/toolkit.html: Document it.
+	* games/canfield.c, games/freecell.c, games/golf.c,
+	  games/solitaire.c, games/spider.c, games/thornq.c: Update.
+
+2013-01-06  Esa Peuha  <esa.peuha@gmail.com>
+
+	* lib/stack.c (stack_flip_cards): New function.
+	* lib/cards.h: Declare it.
+	* docs/toolkit.html: Document it.
+	* lib/stack.c (stack_move_card): New function.
+	* lib/cards.h: Declare it.
+	* docs/toolkit.html: Document it.
+	* games/solitaire.c, games/spider.c, games/thornq.c: Use it.
+
+2013-01-03  Esa Peuha  <esa.peuha@gmail.com>
+
+	* games/spider.c (key): Call clear_arrows before stack_undo.
+	* lib/make-imglib.c (main): Print file name instead of null file
+	pointer if fopen fails.
+
+2012-03-24  DJ Delorie  <dj@delorie.com>
+
+	* configure.in : ACE 1.4 release
+	* configure: regenerated.
+
+2012-03-24  Jari Aalto <jari.aalto@cante.net>
+
+	* Debian mega-patch
+
 2008-04-19  Eric Bachalo  <ebachalo@redhat.com>
 
 	* games/spider.c: Implementation of solitaire game of spider.

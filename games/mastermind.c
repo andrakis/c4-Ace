@@ -18,6 +18,9 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
+
+#include "table.h"
+#include "imagelib.h"
 #include "cards.h"
 
 static Picture *splash, *youwin, *youlose;
@@ -44,8 +47,6 @@ static int sx, sy, sdx;
 static Picture *guesses[MOVES][4];
 static Picture *ranks[MOVES][4];
 static Picture *solution[4];
-
-extern int table_width, table_height;
 
 static int active_row, solution_shown;
 

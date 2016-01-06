@@ -16,8 +16,11 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include <time.h>
 #include "imagelib.h"
+#include "table.h"
 #include "cards.h"
 
 #define W CARD_WIDTH
@@ -40,16 +43,16 @@ start_again()
   int i;
   for (i=0; i<4; i++)
   {
-    stack_flip_stack(freecells[i], deck);
-    stack_flip_stack(outcells[i], deck);
+    stack_flip_stack(freecells[i], deck, 0);
+    stack_flip_stack(outcells[i], deck, 0);
   }
   for (i=0; i<8; i++)
-    stack_flip_stack(maincells[i], deck);
+    stack_flip_stack(maincells[i], deck, 0);
   stack_shuffle(deck);
   stack_shuffle(deck);
   stack_shuffle(deck);
   for (i=0; i<52; i++)
-    stack_flip_card(deck, maincells[i%8]);
+    stack_flip_card(deck, maincells[i%8], 0);
 
   stack_undo_reset();
 }
@@ -84,7 +87,7 @@ init()
   deck = stack_create(10*W, 0);
   for (s=0; s<4; s++)
     for (v=ACE; v<=KING; v++)
-      stack_add_card(deck, MAKE_CARD(s, v, FACEUP));
+      stack_add_card(deck, MAKE_CARD(s, v, FACEDOWN));
 
   start_again();
 }
@@ -291,7 +294,7 @@ auto_move_stack(Stack *s)
   c = stack_get_card(s, n-1);
   if (FACEDOWNP(c))
   {
-    stack_flip_card(s, s);
+    stack_flip_card(s, s, 1);
     c = stack_get_card(s, n-1);
     return 1;
   }
@@ -300,7 +303,7 @@ auto_move_stack(Stack *s)
     for (i=0; i<4; i++)
       if (stack_count_cards(outcells[i]) == 0)
       {
-	stack_animate(s, outcells[i]);
+	stack_animate(s, outcells[i], 1);
 	return 1;
       }
     return 0; /* can't happen? */
@@ -311,7 +314,7 @@ auto_move_stack(Stack *s)
       && VALUE(c) <= lowest[COLOR(c)?0:1] + 2
       && VALUE(c) <= lowest[COLOR(c)?1:0] + 3)
   {
-    stack_animate(s, outcells[pile_for[SUIT(c)]]);
+    stack_animate(s, outcells[pile_for[SUIT(c)]], 1);
     return 1;
   }
   return 0;
@@ -507,9 +510,9 @@ double_click_1(int x, int y, int b)
 	if (f != i && n < cnt && stack_count_cards(maincells[f]))
 	{
 	  if (n == cnt-1)
-	    stack_animate(maincells[i], maincells[f]);
+	    stack_animate(maincells[i], maincells[f], 0);
 	  else
-	    stack_move_cards(maincells[i], n, maincells[f]);
+	    stack_move_cards(maincells[i], maincells[f], cnt - n, 0);
 	  return;
 	}
       }
@@ -520,9 +523,9 @@ double_click_1(int x, int y, int b)
 	    (stack_count_cards(maincells[f]) || n))
 	{
 	  if (n == cnt-1)
-	    stack_animate(maincells[i], maincells[f]);
+	    stack_animate(maincells[i], maincells[f], 0);
 	  else
-	    stack_move_cards(maincells[i], n, maincells[f]);
+	    stack_move_cards(maincells[i], maincells[f], cnt - n, 0);
 	  return;
 	}
       }
@@ -533,7 +536,7 @@ double_click_1(int x, int y, int b)
 	  int c2 = TOPOF(maincells[f]);
 	  if (f != i && stack_count_cards(maincells[f]) == 0)
 	  {
-	    stack_animate(maincells[i], maincells[f]);
+	    stack_animate(maincells[i], maincells[f], 0);
 	    return;
 	  }
 	}
@@ -543,7 +546,7 @@ double_click_1(int x, int y, int b)
 	int c2 = TOPOF(freecells[f]);
 	if (stack_count_cards(freecells[f]) == 0)
 	{
-	  stack_animate(maincells[i], freecells[f]);
+	  stack_animate(maincells[i], freecells[f], 0);
 	  return;
 	}
       }
@@ -552,7 +555,7 @@ double_click_1(int x, int y, int b)
 	int c2 = TOPOF(outcells[f]);
 	if (SUIT(c2) == SUIT(c) && VALUE(c2) == VALUE(c)-1)
 	{
-	  stack_animate(maincells[i], outcells[f]);
+	  stack_animate(maincells[i], outcells[f], 0);
 	  return;
 	}
       }
@@ -567,7 +570,7 @@ double_click_1(int x, int y, int b)
 	int c2 = TOPOF(maincells[f]);
 	if (COLOR(c2) != COLOR(c) && VALUE(c2) == VALUE(c)+1)
 	{
-	  stack_animate(freecells[i], maincells[f]);
+	  stack_animate(freecells[i], maincells[f], 0);
 	  return;
 	}
       }
@@ -576,7 +579,7 @@ double_click_1(int x, int y, int b)
 	int c2 = TOPOF(maincells[f]);
 	if (stack_count_cards(maincells[f]) == 0)
 	{
-	  stack_animate(freecells[i], maincells[f]);
+	  stack_animate(freecells[i], maincells[f], 0);
 	  return;
 	}
       }
@@ -585,7 +588,7 @@ double_click_1(int x, int y, int b)
 	int c2 = TOPOF(outcells[f]);
 	if (SUIT(c2) == SUIT(c) && VALUE(c2) == VALUE(c)-1)
 	{
-	  stack_animate(freecells[i], outcells[f]);
+	  stack_animate(freecells[i], outcells[f], 0);
 	  return;
 	}
       }
@@ -620,7 +623,7 @@ drop(int x, int y, int b)
     return;
   }
 
-  stack_drop(dest_stack, last_n);
+  stack_drop(dest_stack, last_n, 0);
   check_for_end_of_game();
 }
 
