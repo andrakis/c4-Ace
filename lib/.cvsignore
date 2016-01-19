@@ -1,9 +1,0 @@
-.deps
-.libs
-Makefile
-images.c
-images.d
-*.lo
-libcards.la
-make-imglib
-text2c
