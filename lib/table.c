@@ -53,7 +53,7 @@ static int ex=0, ey=0, ew=0, eh=0;
 static int graphics_disabled = 1;
 
 OptionDesc *app_options;
-OptionDesc *xwin_options;
+extern OptionDesc *xwin_options;
 static OptionDesc *options[5];
 
 static OptionDesc ace_options[] = {
@@ -75,7 +75,8 @@ static FunctionMapping flist[] = {
 };
 
 extern image_list cards_imagelib[];
-static image_list card_images[];
+/* c4lc wants a tentative array to know its size */
+static image_list card_images[55];
 
 void
 init_ace(int argc, char **argv, FunctionMapping *funcs)

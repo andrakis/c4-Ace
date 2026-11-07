@@ -60,7 +60,9 @@ static OptionDesc new_options[] = {
   { 0, 0, 0 }
 };
 
-OptionDesc *app_options = new_options;
+/* lib/table.c defines it: not every game has options, and a c4rlink
+   or a modern gcc will not have two definitions */
+extern OptionDesc *app_options;
 
 static void
 start_again()
@@ -664,6 +666,7 @@ int
 main(int argc, char **argv)
 {
   register_imagelib(appimglib_imagelib);
+  app_options = new_options;
   init_ace(argc, argv, fmap);
 
   use_auto_moves = !no_auto;

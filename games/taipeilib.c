@@ -81,7 +81,7 @@ tile_synth2(image *rv)
 
   switch (img->width)
     {
-    case 243:
+    case 234:
       bx = 5; by = 5; bw = 39; bh = 39;
       xo = 50; yo = 6; dx = 36; dy = 36;
       tw = 34; th = 34; txo = 4; tyo = 1;
@@ -113,7 +113,7 @@ tile_synth(image_list *list, int type, int width, int height)
 
   switch (img->width)
     {
-    case 243:
+    case 234:
       bw = 39; bh = 39;
       break;
     }

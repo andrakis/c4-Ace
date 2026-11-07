@@ -1,0 +1,14 @@
+# The Ace of Penguins (games/ace): its solitaires and puzzles, each a
+# program with its images inside it
+ace/:
+	solitaire.c4r: c4ix-ace.c4r
+	canfield.c4r: c4ix-ace-canfield.c4r
+	freecell.c4r: c4ix-ace-freecell.c4r
+	golf.c4r: c4ix-ace-golf.c4r
+	mastermind.c4r: c4ix-ace-mastermind.c4r
+	merlin.c4r: c4ix-ace-merlin.c4r
+	minesweeper.c4r: c4ix-ace-minesweeper.c4r
+	pegged.c4r: c4ix-ace-pegged.c4r
+	spider.c4r: c4ix-ace-spider.c4r
+	taipei.c4r: c4ix-ace-taipei.c4r
+	thornq.c4r: c4ix-ace-thornq.c4r

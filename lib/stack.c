@@ -19,7 +19,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#ifndef C4ACE
 #include <sys/time.h>
+#endif
 #include <sys/types.h>
 #include <unistd.h>
 #include <math.h>
@@ -35,6 +37,12 @@ typedef struct Stack {
   int dx, dy;
   struct Picture *empty_picture;
 } Stack;
+
+#ifdef C4ACE
+int ace_ms(void);
+void ace_pause(void);
+int ace_seed(void);
+#endif
 
 #define STACK_DEF
 #include "imagelib.h"
@@ -334,7 +342,11 @@ stack_shuffle(Stack *s)
   static int randomized = 0;
   if (! randomized)
   {
+#ifdef C4ACE
+    srand(ace_seed());
+#else
     srand(time(0));
+#endif
     randomized = 1;
   }
   for (n=0; n<s->num_cards; n++)
@@ -569,10 +581,11 @@ stack_flip_cards(Stack *src, Stack *dest, int num, int flag)
       src->cards[src->num_cards-1] ^= FACEDOWN;
     else
     {
-      int *temp = alloca(num * sizeof(int));
+      int *temp = (int *)malloc(num * sizeof(int));
       for (i = 0; i < num; i++)
 	temp[i] = src->cards[src->num_cards - i - 1] ^ FACEDOWN;
       memcpy(src->cards + src->num_cards - num, temp, num * sizeof(int));
+      free(temp);
     }
     stack_show_change(src, src->num_cards, src->num_cards - num);
   }
@@ -796,6 +809,11 @@ iabs(int a)
   return a<0 ? -a : a;
 }
 
+#ifdef C4ACE
+/* c4/xwin-c4.c: the machine's clock, or -demo's */
+static int ms_time() { return ace_ms(); }
+static void ms_pause() { ace_pause(); }
+#else
 static int
 ms_time()
 {
@@ -825,6 +843,7 @@ ms_pause()
   tv.tv_usec = ms_pause_amount; /* 1/1000 sec */
   select(0, 0, 0, 0, &tv);
 }
+#endif
 
 void
 stack_animate(Stack *s, Stack *d, int flag)

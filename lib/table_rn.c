@@ -38,4 +38,5 @@ void
 srand(unsigned seed)
 {
   next = seed;
+  initialized = 1;
 }

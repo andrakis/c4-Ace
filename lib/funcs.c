@@ -19,6 +19,9 @@
 #include <stdlib.h>
 #include "funcs.h"
 
+void stack_redraw();
+void table_no_resize();
+
 static void
 default_click_cb(int x, int y, int b)
 {

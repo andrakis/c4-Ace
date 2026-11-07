@@ -158,9 +158,10 @@ static int gx[MAXX+1][MAXY+1];
 static int gy[MAXX+1][MAXY+1];
 
 static struct UndoInfo {
-  unsigned short initial_pick:1;
-  unsigned short from_x:3, from_y:3;
-  unsigned short to_x:3, to_y:3;
+  /* c4lc has no bitfields */
+  unsigned char initial_pick;
+  unsigned char from_x, from_y;
+  unsigned char to_x, to_y;
 } undo_list[49];
 static int next_undo = 0;
 
