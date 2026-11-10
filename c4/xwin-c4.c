@@ -414,6 +414,102 @@ static void all_done()
   }
 }
 
+/************************************************************************/
+/*      The window's menus                                              */
+/************************************************************************/
+
+// In a window of its own (C4IX's desktop) a game has a menu bar. Each item
+// is a key the game already takes, in its key() in games/NAME.c, so a pick
+// is that key pressed where the pointer is. A row is for the games named
+// in its first field, or for every game when that is 0. No game has a
+// redo or a deal played again: F2 deals anew in every one, and Backspace
+// undoes in those that undo. Canfield's help is commented out upstream.
+struct menu_row { char *games; char *menu; char *label; int key; };
+static struct menu_row menu_rows[] = {
+  { 0, "Game", "New Game   F2", KEY_F(2) },
+  { "solitaire canfield freecell golf spider thornq pegged taipei", "Game", "Undo   Backspace", 8 },
+  { "thornq", "Game", "Hint   A", 'a' },
+  { "thornq", "Game", "Hints On/Off", 'A' },
+  { "minesweeper", "Game", "Autoplay   A", 'a' },
+  { "minesweeper", "Game", "Autoplay On/Off", 'A' },
+  { "spider", "Game", "Arrows On/Off   A", 'a' },
+  { 0, "Game", "-", 0 },
+  { 0, "Game", "Exit   Q", 'q' },
+  { "spider", "Suits", "One Suit   1", '1' },
+  { "spider", "Suits", "Two Suits   2", '2' },
+  { "spider", "Suits", "Four Suits   4", '4' },
+  { "minesweeper", "Level", "8x8, 6 Mines", '1' },
+  { "minesweeper", "Level", "11x11, 20 Mines", '2' },
+  { "minesweeper", "Level", "16x16, 45 Mines", '3' },
+  { "minesweeper", "Level", "32x32, 200 Mines", '4' },
+  { "pegged", "Layout", "Cross", '1' },
+  { "pegged", "Layout", "Plus", '2' },
+  { "pegged", "Layout", "Fireplace", '3' },
+  { "pegged", "Layout", "Up Arrow", '4' },
+  { "pegged", "Layout", "Pyramid", '5' },
+  { "pegged", "Layout", "Diamond", '6' },
+  { "pegged", "Layout", "Solitaire", '7' },
+  { "pegged", "Layout", "Triangle of 5", '8' },
+  { "pegged", "Layout", "Triangle of 7", '9' },
+  { "taipei", "Layout", "Standard", '1' },
+  { "taipei", "Layout", "Bridge", '2' },
+  { "taipei", "Layout", "Castle", '3' },
+  { "taipei", "Layout", "Cube", '4' },
+  { "taipei", "Layout", "Glyph", '5' },
+  { "taipei", "Layout", "Pyramid", '6' },
+  { "taipei", "Layout", "Spiral", '7' },
+  { "taipei", "Layout", "Simple", '8' },
+  { "taipei", "Layout", "Smiley", '9' },
+  { "taipei", "Layout", "Jason", 'j' },
+  { "taipei", "Layout", "Rebecca", 'r' },
+  { "solitaire freecell golf spider thornq mastermind merlin minesweeper pegged taipei", "Help", "Help   F1", KEY_F(1) },
+  { 0, 0, 0, 0 }
+};
+enum { MENUS = 4, MENU_ITEMS = 16 };
+static int menu_keys[MENUS][MENU_ITEMS];
+static int menu_n[MENUS];
+
+// name is one of the words of games
+static int for_game(char *games, char *game)
+{
+  int n = strlen(game);
+  if (!games) return 1;
+  while (*games) {
+    while (*games == ' ') games++;
+    if (!strncmp(games, game, n) && (games[n] == ' ' || !games[n])) return 1;
+    while (*games && *games != ' ') games++;
+  }
+  return 0;
+}
+
+static void send_menus(void)
+{
+  char *titles[MENUS];
+  int nm = 0, i, m;
+  for (i = 0; menu_rows[i].menu; i++) {
+    if (!for_game(menu_rows[i].games, name)) continue;
+    for (m = 0; m < nm && strcmp(titles[m], menu_rows[i].menu); m++)
+      ;
+    if (m == nm) {
+      if (nm == MENUS) continue;
+      titles[nm] = menu_rows[i].menu;
+      menu_n[nm] = 0;
+      ace_win_menu(nm, titles[nm]);
+      nm++;
+    }
+    if (menu_n[m] == MENU_ITEMS) continue;
+    ace_win_item(m, menu_rows[i].label);
+    menu_keys[m][menu_n[m]++] = menu_rows[i].key;
+  }
+}
+
+// the key an item of the menu bar stands for, or 0
+static int menu_key(int m, int item)
+{
+  if (m < 0 || m >= MENUS || item < 0 || item >= menu_n[m]) return 0;
+  return menu_keys[m][item];
+}
+
 int xwin_init(int argc, char **argv)
 {
   char *sl;
@@ -503,6 +599,7 @@ void xwin_create(int width, int height)
       exit(1);
     }
     win = 1;
+    send_menus();
   }
   set_size(width, height);
   queue_size();
@@ -763,6 +860,14 @@ int xwin_nextevent(XWin_Event *ev)
     case GUI_EV_KEYUP:
       if (e[1] == 16) shifted = 0;
       break;
+    case ACE_EV_MENU:
+      ev->key = menu_key(e[1], e[2]);
+      if (!ev->key) break;
+      ev->type = ev_keypress;
+      ev->x = mouse_x;
+      ev->y = mouse_y;
+      ev->time = ace_plat_ms();
+      return ev_keypress;
     }
   }
 }

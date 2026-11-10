@@ -96,6 +96,11 @@ int ace_win_poll(int *ev) {
 			canvas_h = w[1] > 0 ? w[1] : WIN_H;
 			continue;
 		}
+		if (k == WIN_MENU) {
+			ev[0] = ACE_EV_MENU;
+			ev[1] = w[0]; ev[2] = w[1]; ev[3] = 0;
+			return 1;
+		}
 		if (k == WIN_DOWN || k == WIN_UP || k == WIN_MOVE) {
 			ev[0] = k == WIN_DOWN ? GUI_EV_DOWN : k == WIN_UP ? GUI_EV_UP : GUI_EV_MOVE;
 			ev[1] = w[0] * fr_w / canvas_w - ox;
@@ -110,6 +115,10 @@ int ace_win_poll(int *ev) {
 		}
 	}
 }
+
+// a window of the game's own has a menu bar; a Terminal ignores these
+void ace_win_menu(int n, char *title) { if (!closed) win_menu(n, title); }
+void ace_win_item(int n, char *label) { if (!closed) win_item(n, label); }
 
 void ace_win_close(void) { if (!closed) { win_close(); closed = 1; } }
 

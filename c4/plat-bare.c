@@ -42,6 +42,9 @@ void ace_win_frame(char *pixels, int w, int h, int pitch, int *pal) {
 }
 int  ace_win_poll(int *ev) { return g ? g->fwin_poll(ev) : 0; }
 void ace_win_close(void) {}
+// grin's window has no menu bar
+void ace_win_menu(int n, char *title) { (void) n; (void) title; }
+void ace_win_item(int n, char *label) { (void) n; (void) label; }
 
 int  ace_plat_ms(void) { return __time(); }
 void ace_plat_sleep(int ms) { if (ms) __c4_usleep(ms * 1000); }

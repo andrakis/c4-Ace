@@ -14,6 +14,8 @@ void ace_win_frame(char *pixels, int w, int h, int pitch, int *pal) {
 }
 int  ace_win_poll(int *ev) { (void) ev; return 0; }
 void ace_win_close(void) {}
+void ace_win_menu(int n, char *title) { (void) n; (void) title; }
+void ace_win_item(int n, char *label) { (void) n; (void) label; }
 int  ace_plat_ms(void) {
 	struct timeval tv;
 	gettimeofday(&tv, 0);

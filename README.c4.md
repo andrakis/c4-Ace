@@ -65,6 +65,11 @@ Terminal its canvas until it ends. On the console it takes the whole display.
 `-fullscreen` takes the display anyway, and `-window` asks for a window even
 where the display is free.
 
+A window of its own has a menu bar (`window.h`'s `win_menu`): Game (New Game,
+Undo where the game undoes, the game's hints or autoplay, Exit), the game's
+suits, level or layout where it has them, and Help. Each item is a key the
+game's `key()` already takes, listed in `c4/xwin-c4.c`'s `menu_rows`.
+
 A window's canvas is 640x400, and a game lays its table out at that size or
 less. A table bigger than that would go in a frame of the window's shape, which
 the desktop scales down.
