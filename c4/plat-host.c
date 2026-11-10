@@ -7,6 +7,7 @@
 
 int  ace_take_display(void) { return 0; }
 void ace_give_display(void) {}
+int  ace_win_here(void) { return 0; }
 int  ace_win_open(char *title, int w, int h) { (void) title; (void) w; (void) h; return 0; }
 void ace_win_frame(char *pixels, int w, int h, int pitch, int *pal) {
 	(void) pixels; (void) w; (void) h; (void) pitch; (void) pal;

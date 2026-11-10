@@ -5,6 +5,7 @@
 #define ACE_PLAT_H
 int  ace_take_display(void);       // 1: the display is the game's
 void ace_give_display(void);
+int  ace_win_here(void);           // 1: started in a window, where a game stays by default
 int  ace_win_open(char *title, int w, int h);   // a window instead; 1 if there is one
 void ace_win_frame(char *pixels, int w, int h, int pitch, int *pal);
 int  ace_win_poll(int *ev);        // as gui_poll; -1: the window has closed

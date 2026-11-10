@@ -32,6 +32,8 @@ static struct grin_table *g;
 
 int  ace_take_display(void) { return !grin(); }
 void ace_give_display(void) {}
+// no desktop here: grin's window is had where ace_take_display says no
+int  ace_win_here(void) { return 0; }
 // grin's window, the table's size (grin wants its frames that size). Flags
 // 2: the game has the mouse, with the pointer free, for cards to be clicked.
 int  ace_win_open(char *title, int w, int h) { return (g = grin()) != 0 && g->fwin_open(title, w, h, 2); }

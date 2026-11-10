@@ -39,10 +39,11 @@ typedef struct pixels_type {
 // a game lays itself out by them.
 enum { DISPLAY_W = 800, DISPLAY_H = 600, WINDOW_W = 640, WINDOW_H = 400, RING = 65536 };
 
-static int opt_window, opt_demo, opt_seed, opt_shotat;
+static int opt_window, opt_fullscreen, opt_demo, opt_seed, opt_shotat;
 static char *opt_shot;
 static OptionDesc xwin_options_list[] = {
   { "-window", OPTION_BOOLEAN, &opt_window },
+  { "-fullscreen", OPTION_BOOLEAN, &opt_fullscreen },
   { "-demo", OPTION_BOOLEAN, &opt_demo },
   { "-seed", OPTION_INTEGER, &opt_seed },
   { "-shot", OPTION_STRING, &opt_shot },
@@ -420,6 +421,9 @@ int xwin_init(int argc, char **argv)
   name = argv[0];
   sl = strrchr(name, '/');
   if (sl) name = sl + 1;
+  // started by its path (the desktop's Files), the window has its name alone
+  if (strlen(name) > 4 && !strcmp(name + strlen(name) - 4, ".c4r"))
+    name[strlen(name) - 4] = 0;
 
   // the games that deal no cards ask rand() alone, which starts from the
   // time unless it is told otherwise
@@ -434,8 +438,13 @@ int xwin_init(int argc, char **argv)
   display_width = DISPLAY_W;
   display_height = DISPLAY_H;
 
-  // Where the display is another's, or -window says, a window: as much as
-  // one holds. -demo with no display at all has no need of one.
+  // A window, as much as one holds: where the game was started in one (a
+  // Terminal of C4IX's desktop, or the window the desktop opened for it),
+  // or -window says, or the display is another's. Otherwise, or with
+  // -fullscreen, the whole display. -demo with no display at all has no
+  // need of either, and stays off a window it was not asked for.
+  if (!opt_fullscreen && !opt_demo && ace_win_here())
+    opt_window = 1;
   if (!opt_window && gui_present() && ace_take_display())
     on = 1;
   else if (opt_window || (gui_present() && !opt_demo)) {

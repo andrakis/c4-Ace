@@ -1,8 +1,8 @@
 // web-ace.mjs - The Ace of Penguins on C4IX in the browser, with a real mouse:
-// a game takes the display from the desktop, a click turns a card, a drag
-// carries one and a bad drop puts it back, h shows the help, q gives the
-// display back to the desktop. Then -window, in the Terminal it was started
-// from. Over CDP, in a tab of its own in one of the user's Chromes (c4's
+// with -fullscreen a game takes the display from the desktop, a click turns a
+// card, a drag carries one and a bad drop puts it back, h shows the help, q
+// gives the display back to the desktop. Then without it, in the Terminal it
+// was typed in, which is where a game plays by default. Over CDP, in a tab of its own in one of the user's Chromes (c4's
 // libjs/tests/cdp.mjs), against a page served from c4's tree:
 //
 //   node libjs/serve.mjs PORT --isolate &
@@ -75,7 +75,7 @@ try {
     termY = t.y + 5;
     await clickAt(termX, termY);
   }
-  await tab.type('solitaire -seed 1\n');
+  await tab.type('solitaire -seed 1 -fullscreen\n');
 
   // M=6, W=73, H=97: the deck at (6,6), the discards beside it, the first
   // column's top card at (6,109)
@@ -146,10 +146,10 @@ try {
   {
     const t = (await find(/^Terminal - task/)).filter(t => t.y < H0 - 30).pop();
     await clickAt(t.x + 5, t.y + 5);
-    await tab.type('solitaire -seed 1 -window\n');
+    await tab.type('solitaire -seed 1\n');
     await sleep(6000);
     await shot('8-window');
-    ok('-window leaves the display to the desktop', (await size())[0] === W0, await size());
+    ok('typed in a Terminal, a game leaves the display to the desktop', (await size())[0] === W0, await size());
     // the window's canvas starts at about (105, 65) of the desktop, and the
     // 559-wide table is in its middle: the deck is near (55, 55) of that,
     // its discards to the right
@@ -171,7 +171,7 @@ try {
     // the Terminal's title, where it was: nothing redraws it to ask
     await sleep(500);
     await clickAt(termX, termY);
-    await tab.type(`${g} -seed 1\n`);
+    await tab.type(`${g} -seed 1 -fullscreen\n`);
     const took = await tab.waitFor(`document.getElementById('display').width !== ${W0}`, 60000);
     await sleep(2500);
     await shot(`g-${g}-splash`);

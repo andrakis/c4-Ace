@@ -1,5 +1,18 @@
 # The Ace of Penguins (games/ace): its solitaires and puzzles, each a
-# program with its images inside it
+# program with its images inside it. The card games are in the desktop's
+# Go > Games > Cards, the others in Puzzles, each in a window of its own
+# (games/README.md).
+#@app Games/Cards|Solitaire|solitaire|window
+#@app Games/Cards|Canfield|canfield|window
+#@app Games/Cards|FreeCell|freecell|window
+#@app Games/Cards|Golf|golf|window
+#@app Games/Cards|Spider|spider|window
+#@app Games/Cards|Thornq|thornq|window
+#@app Games/Puzzles|Mastermind|mastermind|window
+#@app Games/Puzzles|Merlin|merlin|window
+#@app Games/Puzzles|Minesweeper|minesweeper|window
+#@app Games/Puzzles|Pegged|pegged|window
+#@app Games/Puzzles|Taipei|taipei|window
 ace/:
 	solitaire.c4r: c4ix-ace.c4r
 	canfield.c4r: c4ix-ace-canfield.c4r

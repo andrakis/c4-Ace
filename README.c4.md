@@ -15,9 +15,11 @@ Upstream keeps X behind `lib/`, so the games are almost as they were.
 
 - `c4/xwin-c4.c` takes the place of `lib/xwin.c`. Ace draws into an 8-bit
   framebuffer of its own, with pixmaps and masks as arrays of bytes, and sends
-  what changed to the display (`gui_blit8`). Where another program has the
-  display, or with `-window`, it sends the frame to a C4IX window or one of
-  grin's instead.
+  the frame to a C4IX window or one of grin's, or what changed to the display
+  (`gui_blit8`). In C4IX a game started in a window -- a Terminal of the
+  desktop's, or a window the desktop opened for it alone -- stays there
+  (`window.h`'s `win_here`); on the console, or with `-fullscreen`, it takes
+  the display.
 - `lib/help.c` stays, drawing through `c4/X11/Xlib.h`, the dozen X calls it
   makes, also in `xwin-c4.c`.
 - X's fonts are `c4/font.h`: the public-domain misc-fixed fonts, generated once
@@ -52,8 +54,20 @@ here only because upstream's history tracks them.
 ## Playing
 
 `solitaire` and the rest are on the `PATH` in C4IX and on the games disk under
-C4DOS. The mouse plays them; `h` is help, `q` quits. `-window` asks for a window
-when the display is free. Upstream's options still work (`solitaire -vegas`).
+C4DOS. The mouse plays them; `h` is help, `q` quits. Upstream's options still
+work (`solitaire -vegas`).
+
+In C4IX's desktop each is in Go > Games, the card games under Cards and the
+rest under Puzzles, and plays in a window of its own, which closes when the
+game ends; a double-click on one in Files does the same (`c4ix.vfs.txt`'s
+`#@app` lines, which say `window`). Typed in a Terminal, a game makes that
+Terminal its canvas until it ends. On the console it takes the whole display.
+`-fullscreen` takes the display anyway, and `-window` asks for a window even
+where the display is free.
+
+A window's canvas is 640x400, and a game lays its table out at that size or
+less. A table bigger than that would go in a frame of the window's shape, which
+the desktop scales down.
 
 ## The test
 
@@ -65,8 +79,9 @@ and a hash of the whole screen. `make test-ace` holds the c4lc build to a gcc
 `-m32` build of the same code, on the bare machine, under C4DOS and in C4IX.
 
 `c4/web-ace.mjs` plays it in a browser with a real mouse, over CDP: on C4IX's
-display (a click, a bad drop, a legal move, help, every game taking the display
-and giving it back), in a C4IX window with `-window`, and in a window of grin's.
+display with `-fullscreen` (a click, a bad drop, a legal move, help, every game
+taking the display and giving it back), in the Terminal it was typed in, and in
+a window of grin's.
 It is run by hand against a page served from c4's tree, and is not part of
 `test-ace`.
 
