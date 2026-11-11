@@ -70,6 +70,11 @@ Undo where the game undoes, the game's hints or autoplay, Exit), the game's
 suits, level or layout where it has them, and Help. Each item is a key the
 game's `key()` already takes, listed in `c4/xwin-c4.c`'s `menu_rows`.
 
+The window may be dragged to any size, or maximised. Solitaire, FreeCell,
+Spider and Thornq lay their table out again for it, as they do under X; the
+other games keep their table, in the middle of the window, scaled up in whole
+pixels where it fits twice or more and down where it does not fit.
+
 A window's canvas is 640x400, and a game lays its table out at that size or
 less. A table bigger than that would go in a frame of the window's shape, which
 the desktop scales down.

@@ -24,9 +24,12 @@ int  ace_win_here(void) { return win_here(); }
 // the middle of a frame the window's own shape, on the table's colour (index
 // 0, the first colour xwin-c4.c asks for), and its cards keep theirs. A
 // table no bigger than the window is a frame of the window's size, drawn as
-// it is; a bigger one, a frame as big as the table needs, which the desktop
-// scales down. The desktop reads the frame when it next draws, and says so
-// (WIN_FRAME); until then there is nothing to send.
+// it is -- or, where the window holds it twice or more, a frame that many
+// times smaller, which the desktop scales up in whole pixels; a bigger one,
+// a frame as big as the table needs, which the desktop scales down. The
+// window may be any size (win_resizable): each new one is ACE_EV_SIZE, and
+// the next frame has its shape. The desktop reads the frame when it next
+// draws, and says so (WIN_FRAME); until then there is nothing to send.
 static int waiting, again, closed;
 static char *f_px, *frame, *old_frame;
 static int f_w, f_h, f_pitch, *f_pal, ox, oy;
@@ -35,19 +38,27 @@ static int canvas_w = WIN_W, canvas_h = WIN_H;
 
 int ace_win_open(char *title, int w, int h) {
 	(void) w; (void) h;
-	return win_open(title);
+	if (!win_open(title)) return 0;
+	win_resizable();
+	return 1;
 }
 
-// a frame for a table w x h: the window's shape, and at least the window's
-// size. The one before stays until the next, since the desktop may draw the
+// a frame for a table w x h: the window's shape, and the window's size --
+// or a whole part of it, where the table fits that many times over, or more
+// where the table is bigger. The one before stays until the next, since the desktop may draw the
 // last frame it was given again meanwhile.
 static int frame_for(int w, int h) {
-	int fw, fh;
-	fw = WIN_W;
-	if (w > fw) fw = w;
-	if (h * WIN_W > fw * WIN_H) fw = (h * WIN_W + WIN_H - 1) / WIN_H;
-	fh = fw * WIN_H / WIN_W;
-	if (fh < h) fh = h;
+	int fw, fh, k;
+	k = 1;
+	while ((k + 1) * w <= canvas_w && (k + 1) * h <= canvas_h) k++;
+	fw = canvas_w / k;
+	fh = canvas_h / k;
+	if (k == 1) {
+		if (w > fw) fw = w;
+		if (h * canvas_w > fw * canvas_h) fw = (h * canvas_w + canvas_h - 1) / canvas_h;
+		fh = fw * canvas_h / canvas_w;
+		if (fh < h) fh = h;
+	}
 	if (frame && fw == fr_w && fh == fr_h) return 1;
 	if (old_frame) free(old_frame);
 	old_frame = frame;
@@ -59,7 +70,7 @@ static int frame_for(int w, int h) {
 
 static void send_frame(void) {
 	int y;
-	if (!frame_for(f_w, f_h)) return;
+	if (!f_px || !frame_for(f_w, f_h)) return;
 	ox = (fr_w - f_w) / 2;
 	oy = (fr_h - f_h) / 2;
 	for (y = 0; y < f_h; y++)
@@ -92,9 +103,17 @@ int ace_win_poll(int *ev) {
 			continue;
 		}
 		if (k == WIN_SIZE) {
-			canvas_w = w[0] > 0 ? w[0] : WIN_W;
-			canvas_h = w[1] > 0 ? w[1] : WIN_H;
-			continue;
+			w[0] = w[0] > 0 ? w[0] : WIN_W;
+			w[1] = w[1] > 0 ? w[1] : WIN_H;
+			if (w[0] == canvas_w && w[1] == canvas_h) continue;
+			canvas_w = w[0];
+			canvas_h = w[1];
+			// the table is drawn again, and the one held may be let go meanwhile
+			f_px = 0;
+			again = 0;
+			ev[0] = ACE_EV_SIZE;
+			ev[1] = canvas_w; ev[2] = canvas_h; ev[3] = 0;
+			return 1;
 		}
 		if (k == WIN_MENU) {
 			ev[0] = ACE_EV_MENU;

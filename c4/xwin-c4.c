@@ -860,6 +860,15 @@ int xwin_nextevent(XWin_Event *ev)
     case GUI_EV_KEYUP:
       if (e[1] == 16) shifted = 0;
       break;
+    case ACE_EV_SIZE:
+      // the window's new size: a game that lays itself out (its resize
+      // callback) gets a table that size, or the window's first size where
+      // it is smaller; one that keeps its size has it back (table_loop). The
+      // table is drawn again either way, and plat-c4ix.c fits it to the window.
+      set_size(e[1] > WINDOW_W ? e[1] : WINDOW_W, e[2] > WINDOW_H ? e[2] : WINDOW_H);
+      queue_size();
+      *ev = evq[evq_at++];
+      return ev->type;
     case ACE_EV_MENU:
       ev->key = menu_key(e[1], e[2]);
       if (!ev->key) break;

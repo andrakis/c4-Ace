@@ -12,8 +12,9 @@ int  ace_win_poll(int *ev);        // as gui_poll; -1: the window has closed
 void ace_win_close(void);
 // the window's menu bar, where it has one to give (C4IX's desktop): menu n
 // (0 the bar anew), an item of it ("-" a rule); a pick comes from
-// ace_win_poll as ev[0] ACE_EV_MENU, ev[1] the menu, ev[2] the item
-enum { ACE_EV_MENU = 100 };
+// ace_win_poll as ev[0] ACE_EV_MENU, ev[1] the menu, ev[2] the item. The
+// window may change size: ev[0] ACE_EV_SIZE, ev[1] and ev[2] the new one
+enum { ACE_EV_MENU = 100, ACE_EV_SIZE = 101 };
 void ace_win_menu(int n, char *title);
 void ace_win_item(int n, char *label);
 int  ace_plat_ms(void);            // milliseconds
